@@ -1,0 +1,1 @@
+<a onclick='responder( {{{ $id }}} )' class="cursor">Responder</a>

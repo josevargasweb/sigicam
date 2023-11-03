@@ -1,0 +1,1 @@
+<a onclick='mostrarOpciones( {{{ $idEstablecimiento }}}, {{{ $idSala }}}, {{{ $idCama }}}, {{{ $idCaso }}} )' class="cursor">Opciones</a>

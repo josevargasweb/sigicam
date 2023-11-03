@@ -1,0 +1,1 @@
+<a role="menuitem" tabindex="-1" onclick='cambiarDestino( {{{ $derivacion->id }}}, {{{ $derivacion->unidadDestino->establecimientos->id  }}} )' class="cursor">Resolicitar a otro establecimiento</a>

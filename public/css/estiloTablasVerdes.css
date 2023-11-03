@@ -1,0 +1,50 @@
+.table>thead:first-child>tr:first-child>th {
+    color: cornsilk;
+    vertical-align: middle;
+    font-size: 12px !important;
+    font-weight: normal !important;
+}
+
+.table>tbody>tr>td {
+    color: rgb(88, 86, 86);
+    vertical-align: middle;
+    font-size: 12px !important;
+    font-weight: bold !important;
+}
+
+.table>thead>tr {
+    background: #399865;
+}
+
+/* PARA LAS TABLAS QUE VAYAN A USAR BARRAS PARA DESPLAZARSE
+    SE LE DEBERA
+    QUITAR LA CLASE TABLE
+    AGREGAR LA CLASE TABLAX
+    AGREGAR ESTO EN EL DATATABLE
+    "scrollY": "48vh",
+    "scrollX": true, 
+    "scrollCollapse": true,*/
+.tablax>thead:first-child>tr:first-child>th {
+    color: cornsilk;
+    vertical-align: middle;
+    font-size: 12px !important;
+    font-weight: normal !important;
+}
+
+.tablax>tbody>tr>td {
+    color: rgb(88, 86, 86);
+    vertical-align: middle;
+    font-size: 12px !important;
+    font-weight: bold !important;
+}
+
+.tablax>thead>tr {
+    background: #399865;
+}
+/* PARA LAS TABLAS QUE VAYAN A USAR BARRAS PARA DESPLAZARSE */
+
+table.dataTable thead .sorting,
+table.dataTable thead .sorting_asc,
+table.dataTable thead .sorting_desc {
+    background: none;
+}

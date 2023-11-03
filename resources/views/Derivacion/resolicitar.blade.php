@@ -1,0 +1,1 @@
+<a role="menuitem" tabindex="-1" onclick="resolicitar( {{{ $derivacion->id }}} )" class="cursor">Resolicitar a {{{$derivacion->unidadDestino->establecimientos->nombre}}} </a>

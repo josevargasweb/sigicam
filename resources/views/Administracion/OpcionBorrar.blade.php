@@ -1,0 +1,1 @@
+<a class="cursor" onclick="{{$nombre}}({{$id}}, {{"'$sala'"}})">Editar</a>

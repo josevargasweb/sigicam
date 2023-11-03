@@ -1,0 +1,1 @@
+<a role="menuitem" tabindex="-1" class="cursor" onclick="enCurso({{$id}})">Restablecer</a>

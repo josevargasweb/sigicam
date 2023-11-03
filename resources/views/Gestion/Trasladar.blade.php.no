@@ -1,0 +1,644 @@
+@extends("Templates/template")
+
+@section("titulo")
+Traslado paciente
+@stop
+
+@section("script")
+
+<script>
+	var tipoSubmit="";
+	var MAX_OPTIONS = 5;
+	var count=0;
+	var getPacienteCallback = function(data){
+		if(rut != ""){
+			$("#registrarPaciente").prop("disabled", true);
+			$("#rut").val(data.rutSin);
+			$("#dv").val(data.dv);
+			$("#fechaNac").val(data.fecha);
+			$("#nombre").val(data.nombre);
+			$("#sexo").val(data.genero);
+			$("#apellidoP").val(data.apellidoP);
+			$("#apellidoM").val(data.apellidoM);
+			$("#diagnostico").val(data.diagnostico);
+			$("#riesgo").val(data.riesgo);
+			//buscarCama();
+		}
+	}
+	var getPaciente=function(rut){
+		$.ajax({
+			url: "{{URL::to('/')}}/getPaciente",
+			data: {rut: rut, dv: $("#dv").val()},
+			dataType: "json",
+			type: "post",
+			success: getPacienteCallback,
+			error: function(error){
+				console.log(error);
+			}
+		});
+	}
+	var getPacienteId=function(id) {
+		$.ajax({
+			url: "{{URL::to('/')}}/getPaciente",
+			data: {id: id},
+			dataType: "json",
+			type: "post",
+			success: getPacienteCallback,
+			error: function (error) {
+				console.log(error);
+			}
+		});
+	}
+
+	var buscarCama=function(){
+		$.ajax({
+			url: "{{URL::to('/')}}/getCamasDisponibles",
+			type: "post",
+			dataType: "json",
+			@if($unidad_obj)
+			data: {unidad: "{{$unidad_obj->url }}"},
+			@else
+			data: {unidad: ""},
+			@endif
+			success: function(data){
+				if(data.datos.length == 0){
+					$("#tableCamas").hide();
+					$("#tableCamas_wrapper").hide();
+					$("#mensajeNoCamas").html(data.mensaje);
+					$("#noCamas").show();
+				}
+				else{
+					$("#tableCamas_wrapper").show();
+					$("#tableCamas").dataTable().fnClearTable();
+					$("#tableCamas").dataTable().fnAddData(data.datos);
+					$("#noCamas").hide();
+				}
+				$("#derivarCamas").show();
+			},
+			error: function(error){
+				console.log(error);
+			}
+		});
+	}
+
+	var abrirSolicitar=function(id){
+		tipoSubmit="solicitar";
+		var valid=$("#realizarDerivacion").data('bootstrapValidator').validate();
+		$("#registrarTrasladoBtn").prop("disabled", false);
+		console.log(valid.$invalidFields.length);
+		if(valid.$invalidFields.length == 0){
+			$("#asunto").prop("disabled", false);
+			$("#texto").prop("disabled", false);
+			$(".file").prop("disabled", false);
+			$("#idEstablecimiento").val(id);
+			$("#modalSolicitar").modal();
+		}
+		else{
+			$(".file").prop("disabled", true);
+			$("#asunto").prop("disabled", true);
+			$("#texto").prop("disabled", true);
+		}
+	}
+
+	var registrarPaciente=function(form){
+		$.ajax({
+			url: "{{URL::to('/')}}/registrarPaciente",
+			type: "post",
+			dataType: "json",
+			data: form.serialize(),
+			success: function(data){
+				if(data.exito) swalExito.fire({
+						title: 'Exito!',
+						text: data.exito,
+						});
+				if(data.error) {
+					swalError.fire({
+						title: 'Error',
+						text:data.error
+						});
+					console.log(data.msg);
+				}
+			},
+			error: function(error){
+				console.log(error);
+			}
+		});
+	}
+
+	var trasladar=function(form){
+		alert("trasladar");
+		$.ajax({
+			url: "{{URL::to('/')}}/registrarTraslado",
+			type: "post",
+			dataType: "json",
+			data: new FormData(form),
+			cache: false,
+			contentType: false,
+			processData: false,
+			success: function(data){
+				if(data.exito) bootbox.alert("<h4>"+data.exito+"</h4>", function(){
+					window.location.replace("{{ URL::to('derivaciones/enviadas') }}");
+				});
+				if(data.error) {
+					swalError.fire({
+						title: 'Error',
+						text:data.error
+						});
+					console.log(data.msg);
+				}
+			},
+			error: function(error){
+				console.log(error);
+			}
+		});
+	}
+
+	var registrarExtraSistema=function(form){
+		$.ajax({
+			url: "registrarExtraSistema",
+			type: "post",
+			dataType: "json",
+			data: form.serialize(),
+			success: function(data){
+				if(data.exito) bootbox.alert("<h4>"+data.exito+"</h4>", function(){
+					window.location.replace("{{ URL::to('trasladar/trasladosExtraSistema') }}");
+				});
+				if(data.error) {
+					swalError.fire({
+						title: 'Error',
+						text:data.error
+						});
+					console.log(data.msg);
+				}
+			},
+			error: function(error){
+				console.log(error);
+			}
+		});
+	}
+
+	var rut_callback = function(value, validator, $field){
+		var field_rut = $("#rut");
+		var dv = $("#dv");
+		$("#realizarDerivacion").data('bootstrapValidator').resetField("rut");
+		$("#realizarDerivacion").data('bootstrapValidator').resetField("dv");
+		if(field_rut.val() == '' && dv.val() == '') return true;
+		if(field_rut.val() != '' && dv.val() != '') {
+			var rut = $.trim(field_rut.val());
+			var esValido=Fn.validaRut(field_rut.val()+"-"+dv.val());
+			if (!esValido) {
+				return {valid: false, message: "Dígito verificador no coincide con el rut"};
+			}
+			else {
+				getPaciente(rut);
+			}
+		}
+		return true;
+	}
+
+	$(function(){
+@if($paciente)
+		getPacienteId('{{$paciente->id}}');
+@endif
+		$("#registrarPaciente").on("click", function(){
+			tipoSubmit="registrar";
+		});
+
+		$("#registrarTrasladoBtn").on("click", function(){
+			tipoSubmit="trasladar";
+		});
+
+		$("#registroExtraSistema").on("click", function(){
+			tipoSubmit="extraSistema";
+		});
+
+		$("#addEstab").on("click", function(){
+			$("#estabExterno").prop("disabled", false);
+			$("#divEstabExterno").show();
+		});
+
+		$("#selectEstablecimiento").on("change", function(){
+			$.ajax({
+				url: "{{URL::to('getUnidadesSelect') }}",
+				type: "get",
+				dataType: "json",
+				data: { selectEstablecimiento: $(this).val() },
+				success: function(data){
+					select = "";
+					for(var i in data){
+						select += "<option value='" + i + "'>" + data[i] + "</option>";
+					}
+					$("#selectUnidades").html(select);
+				},
+				error: function(error){
+					console.log(error);
+				}
+			});
+		});
+		$('#fileMain').fileinput();
+		$(".file-input-new .input-group").css("width", "100%");
+
+
+		$('#modalSolicitar').on('hidden.bs.modal', function() {
+ 			$(".file").prop("disabled", true);
+			$("#asunto").prop("disabled", true);
+			$("#texto").prop("disabled", true);
+ 		});
+
+		$("#realizarDerivacion").bootstrapValidator({
+ 			 excluded: ':disabled',
+ 			 fields: {
+ 			 	rut: {
+ 			 		validators:{
+ 			 			notEmpty: {
+ 			 				message: 'El rut es obligatorio'
+ 			 			},
+						remote: {
+							url: "{{ URL::to("/validarParaTraslado") }}"
+						},
+						callback: {
+							callback: rut_callback
+						}
+ 			 		}
+ 			 	},
+ 			 	dv: {
+ 			 		validators:{
+ 			 			notEmpty: {
+ 			 				message: 'El dígito verificador es obligatorio'
+ 			 			},
+ 			 			callback: {
+ 			 				callback: rut_callback
+ 			 			}
+ 			 		}
+ 			 	},
+ 			 	nombre: {
+ 			 		validators:{
+ 			 			notEmpty: {
+ 			 				message: 'El nombre es obligatorio'
+ 			 			}
+ 			 		}
+ 			 	},
+ 			 	fechaNac: {
+ 			 		validators:{
+ 			 			notEmpty: {
+ 			 				message: 'El fecha de nacimiento es obligatoria'
+ 			 			},
+ 			 			callback: {
+ 			 				callback: function(value, validator, $field){
+ 			 					if (value === '') {
+ 			 						return true;
+ 			 					}
+ 			 					var esMayor=esFechaMayor(value);
+ 			 					if(esMayor){
+ 			 						return {valid: false, message: "La fecha de nacimiento no puede ser mayor a la fecha actual"};
+ 			 					}
+ 			 					var esValidao=validarFormatoFecha(value);
+ 			 					if(!esValidao) return {valid: false, message: "Formato de fecha inválido"};
+ 			 					return true;
+ 			 				}
+ 			 			}
+ 			 		}
+ 			 	},
+ 			 	diagnostico: {
+ 			 		validators:{
+ 			 			notEmpty: {
+ 			 				message: 'El diagnóstico es obligatorio'
+ 			 			}
+ 			 		}
+ 			 	},
+ 			 	asunto: {
+ 			 		validators:{
+ 			 			notEmpty: {
+ 			 				message: 'El asunto es obligatorio'
+ 			 			}
+ 			 		}
+ 			 	},
+ 			 	texto: {
+ 			 		validators:{
+ 			 			notEmpty: {
+ 			 				message: 'El texto del asunto es obligatorio'
+ 			 			}
+ 			 		}
+ 			 	}
+ 			 }
+ 		}).on('status.field.bv', function(e, data) {
+ 			$("#registrarPaciente").prop("disabled", false);
+        }).on("success.form.bv", function(evt){
+        	$("#registrarPaciente").prop("disabled", false);
+ 			evt.preventDefault(evt);
+ 			var $form = $(evt.target);
+			alert("tipoSubmit="+tipoSubmit);
+ 			if(tipoSubmit == "registrar") registrarPaciente($form);
+ 			if(tipoSubmit == "trasladar") trasladar($form[0]);
+ 			if(tipoSubmit == "extraSistema") registrarExtraSistema($form);
+ 			$("#realizarDerivacion input[type='submit']").prop("disabled", false);
+ 			/*AQUI*/
+ 		}).on('click', '.addButton', function() {
+            var $template = $('#optionTemplate'),
+                $clone    = $template
+                                .clone()
+                                .removeClass('hide')
+                                .removeAttr('id')
+                                .insertBefore($template),
+                $option   = $clone.find('[name="files[]"]');
+                $option.prop("disabled", false);
+                var id="id_"+count;
+                $option.prop("id", id);
+                $('#'+id).fileinput();
+                $(".file-input-new .input-group").css("width", "100%");
+                count++;
+            $('#realizarDerivacion').bootstrapValidator('addField', $option);
+        }).on('click', '.removeButton', function() {
+            var $row    = $(this).parents('.form-group'),
+                $option = $row.find('[name="files[]"]');
+            $row.remove();
+            $('#realizarDerivacion').bootstrapValidator('removeField', $option);
+        }).on('added.field.bv', function(e, data) {
+            if (data.field === 'files[]') {
+                if ($('#realizarDerivacion').find(':visible[name="files[]"]').length >= MAX_OPTIONS) {
+                    $('#realizarDerivacion').find('.addButton').attr('disabled', 'disabled');
+                }
+            }
+        }).on('removed.field.bv', function(e, data) {
+           if (data.field === 'files[]') {
+                if ($('#realizarDerivacion').find(':visible[name="files[]"]').length < MAX_OPTIONS) {
+                    $('#realizarDerivacion').find('.addButton').removeAttr('disabled');
+                }
+            }
+        });
+
+		$('#modalSolicitar').on('hidden.bs.modal', function (e) {
+			$("#divErroresDerivar div ol").empty();
+			$("#divErroresDerivar").hide();
+		});
+
+		$("#fechaNac").datepicker({
+			autoclose: true,
+			language: "es",
+			format: "dd-mm-yyyy",
+			todayHighlight: true,
+			endDate: "+0d"
+		}).on("changeDate", function(){
+			$('#realizarDerivacion').bootstrapValidator('revalidateField', 'fechaNac');
+		});
+
+		$('#tableCamas').dataTable({	
+ 			"aaSorting": [[0, "asc"]],
+ 			"iDisplayLength": 5,
+ 			"bJQueryUI": true,
+ 			"oLanguage": {
+ 				"sUrl": "{{ URL::to('/') }}/js/spanish.txt"
+ 			}
+ 		});
+
+ 		$("#solicitarTrasladoBtn").on("click", function(){
+ 			abrirSolicitar($("#selectUnidades").val());
+ 		});
+
+		$("#buscarCama").on("click", function(){
+			buscarCama();
+		});
+
+		$("#selectEstablecimiento").trigger("change");
+@if($unidad_obj)
+		buscarCama();
+@endif
+	});
+</script>
+
+@stop
+
+@section("miga")
+<nav class="navbar navbar-default navbar-static subir-nav-header miga">
+	@include("Templates/migaCollapse")
+	<div class="collapse navbar-collapse bs-js-navbar-collapse">
+		<div class="navbar-header">
+			<ol class="breadcrumb listaMiga">
+				<li><a href="{{URL::to('index')}}"><span class="glyphicon glyphicon-home"></span> Inicio</a></li>
+				<li><a href="#">Gestión de Camas</a></li>
+				<li><a href="#">Traslado Paciente</a></li>
+			</ol>
+		</div>
+		@include("Templates/migaAcciones")
+	</div>
+</nav>
+@stop
+
+@section("section")
+
+{{ Form::open(array('url' => 'realizarDerivacion', 'method' => 'post', 'class' => 'form-horizontal', 'role' => 'form', 'id' => 'realizarDerivacion', 'onsubmit' => 'false', 'files'=> true)) }}
+{{ Form::hidden('idEstablecimiento', '', array('id' => 'idEstablecimiento')) }}
+@if($unidad_obj)
+{{ Form::hidden('unidad', "$unidad_obj->url", array('id' => 'unidad')) }}
+@endif
+@if($paciente)
+{{ Form::hidden('rutCaso', $paciente->rut, array('id' => 'rutCaso')) }}
+{{ Form::hidden('idPaciente', $paciente->id, array("id" => "idPaciente")) }}
+@else
+	{{ Form::hidden('rutCaso', null, array('id' => 'rutCaso')) }}
+	{{ Form::hidden('idPaciente', null, array("id" => "idPaciente")) }}
+@endif
+{{ Form::hidden('motivo', "traslado externo", array('id' => 'motivo')) }}
+<fieldset>
+@if($unidad_obj)
+	<legend>Gestión Camas {{$unidad_obj->alias}}</legend>
+@else
+	<legend>Solicitar traslado externo</legend>
+@endif
+	<div class="row">
+		<div class="form-group col-md-6">
+			<label for="rut" class="col-sm-2 control-label">Rut: </label>
+			<div class="col-sm-10">
+				<div class="input-group">
+					{{Form::text('rut', null, array('id' => 'rut', 'class' => 'form-control', 'autofocus' => 'true'))}}
+					<span class="input-group-addon"> - </span>
+					{{Form::text('dv', null, array('id' => 'dv', 'class' => 'form-control', 'style' => 'width: 70px;'))}}
+				</div>
+			</div>
+		</div>
+		<div class="form-group col-md-6">
+			<label for="fecha" class="col-sm-2 control-label">Fecha de nacimiento: </label>
+			<div class="col-sm-10">
+				{{Form::text('fechaNac', null, array('id' => 'fechaNac', 'class' => 'form-control', 'required' => "true"))}}
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="form-group col-md-6">
+			<label for="rut" class="col-sm-2 control-label">Nombre: </label>
+			<div class="col-sm-10">
+				{{Form::text('nombre', null, array('id' => 'nombre', 'class' => 'form-control'))}}
+			</div>
+		</div>
+		<div class="form-group col-md-6">
+			<label for="fecha" class="col-sm-2 control-label">Género: </label>
+			<div class="col-sm-10">
+				{{ Form::select('sexo', array('masculino' => 'Masculino', 'femenino' => 'Femenino', 'indefinido' => 'Indefinido', 'desconocido' => 'Desconocido'), null, array('id' => 'sexo', 'class' => 'form-control')) }}
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="form-group col-md-6">
+			<label for="rut" class="col-sm-2 control-label">Apellido paterno: </label>
+			<div class="col-sm-10">
+				{{Form::text('apellidoP', null, array('id' => 'apellidoP', 'class' => 'form-control'))}}
+			</div>
+		</div>
+		<div class="form-group col-md-6">
+			<label for="fecha" class="col-sm-2 control-label">Apellido materno: </label>
+			<div class="col-sm-10">
+				{{Form::text('apellidoM', null, array('id' => 'apellidoM', 'class' => 'form-control'))}}
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="form-group col-md-6">
+			<label for="prevision" class="col-sm-2 control-label">Previsión: </label>
+			<div class="col-sm-10">
+				{{ Form::select('prevision', $prevision, 'SIN INFORMACION', array('class' => 'form-control')) }}
+			</div>
+		</div>
+		<div class="form-group col-md-6">
+			<label for="riesgo" class="col-sm-2 control-label">Riesgo: </label>
+			<div class="col-sm-10">
+				{{ Form::select('riesgo', $riesgo, null, array('id' => 'riesgo', 'class' => 'form-control')) }}
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="form-group col-md-6">
+			<label for="fecha" class="col-sm-2 control-label">Diagnóstico: </label>
+			<div class="col-sm-10">
+				{{Form::text('diagnostico', null, array('id' => 'diagnostico', 'class' => 'form-control'))}}
+			</div>
+		</div>
+
+		<div class="form-group col-md-6">
+
+		</div>
+	</div>
+</fieldset>
+
+
+<div id="modalSolicitar" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title">Solicitar cama</h4>
+			</div>
+			<div class="modal-body">
+				<div class="row" style="margin: 0;">
+					<div class="form-group col-md-12">
+						{{Form::text('asunto', null, array('id' => 'asunto', 'class' => 'form-control', 'disabled', 'placeholder' => 'Asunto'))}}
+					</div>
+					<div class="form-group col-md-12">
+						{{Form::textarea('texto', null, array('id' => 'texto', 'class' => 'form-control', 'rows' => '5',  'disabled'))}}
+					</div>
+					<div class="form-group col-md-12">
+						<table>
+							<tr>
+								<td><button type="button" class="btn btn-default addButton"><span class="glyphicon glyphicon-plus"></span></button></td>
+								<td style="width: 100%;"><input id="fileMain" multiple type="file" name="files[]" class="file" title="Elegir archivo"  data-upload-label="Subir" data-browse-label="Seleccionar ..." data-remove-label="Eliminar" data-show-preview="false" data-show-upload="false"/></td>
+							</tr>
+						</table>
+					</div>
+					<div class="form-group hide col-md-12" id="optionTemplate">
+						<table>
+							<tr>
+								<td><button type="button" class="btn btn-default removeButton"><span class="glyphicon glyphicon-minus"></span></button></td>
+								<td style="width: 100%;"><input multiple type="file" name="files[]" class="file" title="Elegir archivo"  data-upload-label="Subir" data-browse-label="Seleccionar ..." data-remove-label="Eliminar" data-show-preview="false" data-show-upload="false"/></td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button id="registrarTrasladoBtn" type="submit" class="btn btn-primary">Aceptar</button>
+				<button type="button" class="btn btn-danger" data-dismiss="modal">Cancelar</button>
+			</div>
+		</div>
+	</div>
+</div>
+@if($unidad_obj)
+<div class="row">
+	<h4>Seleccionar establecimiento destino dentro del Servicio de Salud por cupo</h4>
+	<fieldset><legend></legend>
+	<div id="derivarCamas" style="display: none;">
+		<table id="tableCamas" class="table table-striped table-condensed table-bordered">
+			<thead>
+			<tr>
+				<th>Establecimiento</th>
+				<th>Servicio</th>
+				<!--	<th>Tipo de cama</th>-->
+				<th>Cupos</th>
+				<th>Solicitar</th>
+			</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+		<div id="noCamas">
+			<div class="alert alert-danger" role="alert" style="text-align: center; font-size: 14px;">
+				<strong id="mensajeNoCamas"></strong>
+			</div>
+@if (Session::get("complejidad") != 'baja')
+			<h4>Seleccionar establecimiento extra sistema</h4>
+			<fieldset><legend></legend>
+			<div class="form-group col-md-10">
+				<label for="estabsExterno" class="col-sm-2 control-label">Hospital externo: </label>
+				<div class="col-sm-8">
+					{{ Form::select('estabsExterno', $establecimiento, null, array('id' => 'estabsExterno', 'class' => 'form-control')) }}
+				</div>
+				<div class="col-sm-2">
+					<button id="addEstab" type="button" class="btn btn-primary">Agregar establecimiento</button>
+				</div>
+			</div>
+			<div id="divEstabExterno" class="form-group col-md-10" style="display: none;">
+				<label for="estabExterno" class="col-sm-2 control-label">Establecimiento: </label>
+				<div class="col-sm-6">
+					{{Form::text('estabExterno', null, array('id' => 'estabExterno', 'class' => 'form-control', 'disabled', 'required'))}}
+				</div>
+				<div class="col-sm-2">
+
+				</div>
+			</div>
+			<div class="form-group col-md-10">
+				<div class="col-sm-10">
+				</div>
+				<div class="col-sm-2">
+					<button id="registroExtraSistema" type="submit" class="btn btn-primary">Solicitar al extra sistema</button>
+				</div>
+			</div>
+			</fieldset>
+	@endif
+		</div>
+	</div>
+	</fieldset>
+</div>
+@endif
+<div class="row">
+<h4>Seleccionar establecimiento y servicio destino</h4>
+<fieldset><legend></legend>
+<div id="seleccionarDestino">
+	<div class="row">
+		<div class="form-group col-md-12">
+			<div class="col-sm-5">
+				{{Form::select('selectEstablecimiento', Establecimiento::getEstablecimientos(false, [Session::get("idEstablecimiento")]), null, array('id' => 'selectEstablecimiento', 'class' => 'form-control'))}}
+			</div>
+			<div class="col-sm-5">
+				{{Form::select('selectUnidades', [], null, array('id' => 'selectUnidades', 'class' => 'form-control'))}}
+			</div>
+			<div class="col-sm-2">
+				<button id="solicitarTrasladoBtn" class="btn btn-primary">Solicitar</button>
+			</div>
+		</div>
+	</div>
+</div>
+</fieldset>
+</div>
+{{ Form::close() }}
+
+<br><br>
+
+@stop

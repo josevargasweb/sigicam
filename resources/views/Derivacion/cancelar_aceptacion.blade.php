@@ -1,0 +1,1 @@
+<a role="menuitem" tabindex="-1" onclick='cancelar_aceptacion( {{{ $id }}} )' class="cursor">Cancelar aceptación</a>

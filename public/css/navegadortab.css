@@ -1,0 +1,33 @@
+.primerNav{
+  background-color:#1E9966;
+}
+  .primerNav > li > a{
+    color: #fff !important;
+  }
+
+    .primerNav > li.active > a, .primerNav > li.active > a:hover,.primerNav > li.active > a:focus,.primerNav > li > a:hover, .primerNav > li > a:focus{
+      background-color:#c35c6b;
+    }
+
+.segundoNav{
+  background-color:#c35c6b
+}
+
+  .segundoNav > li > a{
+    color: #fff !important;
+  }
+
+    .segundoNav > li.active > a, .segundoNav > li.active > a:hover,.segundoNav > li.active > a:focus, .segundoNav > li > a:hover, .segundoNav > li > a:focus{
+      background-color:#bce8f1;
+      color: #1e9966 !important;
+    }
+
+.tercerNav{
+  background-color:#1E9966;
+}
+  .tercerNav > li > a{
+    color: #fff !important;
+  }
+    .tercerNav > li.active > a, .tercerNav > li.active > a:hover,.tercerNav > li.active > a:focus,.tercerNav > li > a:hover, .tercerNav > li > a:focus{
+        background-color:#c35c6b;
+    }    

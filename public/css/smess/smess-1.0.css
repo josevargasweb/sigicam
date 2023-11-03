@@ -1,0 +1,54 @@
+
+
+/* scrollbar */
+
+/* width */
+.smess-main-container::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+/* Track */
+.smess-main-container::-webkit-scrollbar-track {
+box-shadow: inset 0 0 5px grey; 
+border-radius: 0px;
+}
+   
+/* Handle */
+.smess-main-container::-webkit-scrollbar-thumb {
+    background: rgb(233, 186, 186, 0.5); 
+border-radius: 5px;
+}
+  
+/* Handle on hover */
+.smess-main-container::-webkit-scrollbar-thumb:hover {
+background: rgb(233, 186, 186, 0.5); 
+}
+
+
+.smess-main-container{
+    position: fixed;
+    top: 32%;
+    bottom: 2%;
+    left: 75%;
+    overflow-y: auto;
+    height: max-content;
+}
+
+.smess-info-container{
+    position: fixed;
+    text-align: right;
+    font-size: 30px;
+    right: 20px;
+    top: 130px;
+    cursor: pointer;
+}
+
+.smess-info-container .badge{
+    background-color: red !important;
+    padding : 0px 4px !important;
+}
+
+.smess-message-title{
+    font-weight: bold;
+}
+
